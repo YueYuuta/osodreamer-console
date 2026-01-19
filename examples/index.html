@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OsoDreamer Console Demo</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #222;
+            color: #fff;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: #3b82f6;
+            color: white;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.err {
+            background: #ef4444;
+        }
+
+        button.warn {
+            background: #f59e0b;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        h2 {
+            font-size: 16px;
+            color: #a1a1aa;
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>OsoDreamer Console Demo</h1>
+    <p>Check the bottom LEFT for the "DEV TOOLS" button.</p>
+
+    <div class="section">
+        <h2>1. Console Logs</h2>
+        <button onclick="console.log('Hello Log', {foo:'bar', date: new Date()})">Log Info</button>
+        <button class="warn" onclick="console.warn('Warning! Something might be wrong.')">Log Warn</button>
+        <button class="err" onclick="console.error('Critical Error!', new Error('Stack trace here'))">Log Error</button>
+    </div>
+
+    <div class="section">
+        <h2>2. Network Requests (Fetch & XHR)</h2>
+        <button onclick="fetchJson()">Fetch JSON (Success)</button>
+        <button class="err" onclick="fetchError()">Fetch 404 (Error)</button>
+        <button onclick="runXHR()">XHR Request</button>
+    </div>
+
+    <div class="section">
+        <h2>3. System Errors</h2>
+        <button class="err" onclick="throwError()">Throw Uncaught Error</button>
+    </div>
+
+    <!-- Load the built library from ../dist -->
+    <script src="../dist/osodreamer-console.umd.js"></script>
+
+    <script>
+        // Initialize the console with THEME
+        const odc = new window.OsoDreamerConsole({
+            maxLogs: 50,
+            theme: {
+                primary: '#10b981', // Emerald Green
+                background: 'rgba(20, 20, 20, 0.95)',
+                text: '#ecfdf5'
+            },
+            trigger: {
+                text: 'DEV TOOLS',
+                color: '#059669',
+                position: 'bottom-left'
+            }
+        });
+        console.log('Console Initialized with Custom Theme!');
+
+        function fetchJson() {
+            fetch('https://jsonplaceholder.typicode.com/todos/' + Math.floor(Math.random() * 100))
+                .then(r => r.json())
+                .then(d => console.log('Fetched Data:', d));
+        }
+
+        function fetchError() {
+            fetch('https://httpstat.us/404')
+                .then(r => console.log('Fetched 404'))
+                .catch(e => console.error('Fetch Failed', e));
+        }
+
+        function runXHR() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1');
+            xhr.send();
+        }
+
+        function throwError() {
+            throw new Error('This is a simulated uncaught error');
+        }
+    </script>
+</body>
+
+</html>

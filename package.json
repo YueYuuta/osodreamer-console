@@ -1,0 +1,42 @@
+{
+    "name": "osodreamer-console",
+    "version": "1.0.0",
+    "description": "A lightweight, framework-agnostic developer console for web applications.",
+    "main": "./dist/osodreamer-console.umd.js",
+    "module": "./dist/osodreamer-console.es.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/osodreamer-console.es.js",
+            "require": "./dist/osodreamer-console.umd.js"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview",
+        "test": "jest",
+        "test:coverage": "jest --coverage"
+    },
+    "keywords": [
+        "console",
+        "debugger",
+        "developer-tools",
+        "logger"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/jest": "^29.5.12",
+        "@types/node": "^20.11.24",
+        "jest": "^29.7.0",
+        "jest-environment-jsdom": "^29.7.0",
+        "ts-jest": "^29.1.2",
+        "typescript": "^5.3.3",
+        "vite": "^5.1.4",
+        "vite-plugin-dts": "^3.7.3"
+    }
+}
