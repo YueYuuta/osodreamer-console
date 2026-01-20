@@ -6,6 +6,7 @@ export class Draggable {
     initialLeft: number = 0;
     initialTop: number = 0;
     onClick: () => void;
+    private isTracking: boolean = false;
 
     constructor(element: HTMLElement, onClick: () => void) {
         this.element = element;
@@ -14,67 +15,110 @@ export class Draggable {
     }
 
     init() {
-        const start = (cx: number, cy: number) => {
-            this.isDragging = false;
-            this.startX = cx;
-            this.startY = cy;
-            const rect = this.element.getBoundingClientRect();
-            this.initialLeft = rect.left;
-            this.initialTop = rect.top;
+        this.element.style.touchAction = 'none';
+        this.element.style.userSelect = 'none';
+        this.element.style.cursor = 'grab';
 
-            this.element.style.bottom = 'auto';
-            this.element.style.right = 'auto';
-            this.element.style.left = this.initialLeft + 'px';
-            this.element.style.top = this.initialTop + 'px';
+        this.element.addEventListener('mousedown', this.onMouseDown.bind(this));
+
+        this.element.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
+        this.element.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
+        this.element.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
+        this.element.addEventListener('touchcancel', this.onTouchCancel.bind(this));
+    }
+
+    private onMouseDown(e: MouseEvent) {
+        if (e.button !== 0) return;
+
+        this.startDrag(e.clientX, e.clientY);
+
+        const onMouseMove = (ev: MouseEvent) => {
+            this.moveDrag(ev.clientX, ev.clientY);
         };
 
-        const move = (cx: number, cy: number) => {
-            if (Math.abs(cx - this.startX) > 5 || Math.abs(cy - this.startY) > 5) {
+        const onMouseUp = () => {
+            this.endDragSafe();
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    }
+
+    private onTouchStart(e: TouchEvent) {
+        if (e.touches.length > 1) return;
+
+        const touch = e.touches[0];
+        this.startDrag(touch.clientX, touch.clientY);
+    }
+
+    private onTouchMove(e: TouchEvent) {
+        if (!this.isTracking) return;
+
+        if (e.cancelable) e.preventDefault();
+
+        const touch = e.touches[0];
+        this.moveDrag(touch.clientX, touch.clientY);
+    }
+
+    private onTouchEnd(e: TouchEvent) {
+        if (e.cancelable) e.preventDefault();
+        this.endDragSafe();
+    }
+
+    private onTouchCancel() {
+        this.endDragSafe(false);
+    }
+
+    private startDrag(clientX: number, clientY: number) {
+        this.isTracking = true;
+        this.isDragging = false;
+        this.startX = clientX;
+        this.startY = clientY;
+
+        const rect = this.element.getBoundingClientRect();
+        this.initialLeft = rect.left;
+        this.initialTop = rect.top;
+
+        this.element.style.bottom = 'auto';
+        this.element.style.right = 'auto';
+        this.element.style.left = this.initialLeft + 'px';
+        this.element.style.top = this.initialTop + 'px';
+
+        this.element.style.transition = 'none';
+        this.element.style.cursor = 'grabbing';
+    }
+
+    private moveDrag(clientX: number, clientY: number) {
+        if (!this.isTracking) return;
+
+        const dx = clientX - this.startX;
+        const dy = clientY - this.startY;
+
+        if (!this.isDragging) {
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
                 this.isDragging = true;
             }
-            if (this.isDragging) {
-                this.element.style.left = (this.initialLeft + (cx - this.startX)) + 'px';
-                this.element.style.top = (this.initialTop + (cy - this.startY)) + 'px';
-            }
-        };
+        }
 
-        const endDrag = () => {
-            if (this.isDragging) {
-                this.snapToBounds();
-            } else {
-                this.onClick();
-            }
-        };
+        if (this.isDragging) {
+            this.element.style.left = (this.initialLeft + dx) + 'px';
+            this.element.style.top = (this.initialTop + dy) + 'px';
+        }
+    }
 
-        const endTouch = (e: TouchEvent) => {
-            if (e.cancelable) e.preventDefault();
-            endDrag();
-        };
+    private endDragSafe(shouldClick: boolean = true) {
+        if (!this.isTracking) return;
+        this.isTracking = false;
+        this.element.style.cursor = 'grab';
 
-        const endMouse = () => {
-            endDrag();
-        };
-
-
-        this.element.addEventListener('touchstart', (e) => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-        this.element.addEventListener('touchmove', (e) => {
-            if (e.cancelable) e.preventDefault();
-            move(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: false });
-        this.element.addEventListener('touchend', endTouch);
-
-        this.element.addEventListener('mousedown', (e) => start(e.clientX, e.clientY));
-        window.addEventListener('mousemove', (e) => {
-            if (this.isDragging || (e.buttons === 1 && this.element.contains(e.target as Node))) {
-                move(e.clientX, e.clientY);
-            }
-        });
-        window.addEventListener('mouseup', () => {
-            if (this.isDragging) endMouse();
-        });
-        this.element.addEventListener('mouseup', () => {
-            if (!this.isDragging) endMouse();
-        });
+        if (this.isDragging) {
+            this.snapToBounds();
+            this.isDragging = false;
+        } else if (shouldClick) {
+            this.onClick();
+        }
     }
 
     snapToBounds() {

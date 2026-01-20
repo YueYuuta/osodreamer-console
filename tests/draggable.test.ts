@@ -34,7 +34,7 @@ describe('Draggable', () => {
         el.dispatchEvent(start);
 
         const end = new MouseEvent('mouseup');
-        el.dispatchEvent(end);
+        window.dispatchEvent(end);
 
         expect(onClick).toHaveBeenCalled();
     });
@@ -44,7 +44,7 @@ describe('Draggable', () => {
         el.dispatchEvent(new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
 
 
-        el.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10, buttons: 1, bubbles: true }));
+        window.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10, buttons: 1, bubbles: true }));
 
 
         expect(draggable.isDragging).toBe(true);
