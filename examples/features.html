@@ -77,6 +77,12 @@
         <button onclick="logLargeArray()" style="background:#0891b2;color:white">Log Array (1000 items)</button>
     </div>
 
+    <div class="group">
+        <h2>7. Mocking System</h2>
+        <p>Click to create a Mock for '/api/pay' and fire a request. The console should intercept it.</p>
+        <button onclick="createMockAndTest()" style="background:#ec4899;color:white">Create Mock & Fetch</button>
+    </div>
+
     <script src="../dist/osodreamer-console.umd.js"></script>
     <script>
         // Initialize Console
@@ -169,6 +175,28 @@
                 arr.push({ id: i, value: Math.random() });
             }
             console.log("Large Array (1000 items):", arr);
+        }
+
+        function createMockAndTest() {
+            console.log("Creating Mock for /api/pay ...");
+            // Add Mock programmatically for demonstration
+            consoleInstance.store.addMock({
+                id: 'demo-mock',
+                active: true,
+                method: 'POST',
+                urlPattern: '/api/pay',
+                status: 200,
+                delay: 1000,
+                responseBody: JSON.stringify({ success: true, message: "Payment Approved (MOCKED)" })
+            });
+
+            console.log("Sending POST to /api/pay (Wait 1s)...");
+            fetch('/api/pay', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => {
+                    console.log("See? Response is from mock:", d);
+                    alert("Mock worked! Check console for details.");
+                });
         }
 
         console.log("Demo Loaded. Click buttons to test features.");

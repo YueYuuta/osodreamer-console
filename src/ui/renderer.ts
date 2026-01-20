@@ -49,11 +49,13 @@ export class Renderer {
                 <div class="odc__tabs-scroll">
                     <div class="odc__tab odc__tab--active" data-tab="console">Console</div>
                     <div class="odc__tab" data-tab="network">Network</div>
+                    <div class="odc__tab" data-tab="mocks">Mocks</div>
                     <div class="odc__tab" data-tab="storage">Storage</div>
                     <div class="odc__tab" data-tab="system">System</div>
                 </div>
                 <div class="odc__spacer"></div>
                 <input class="odc__search" id="odc-search" placeholder="Filter..." />
+                <div class="odc__clear" id="odc-clear" style="cursor:pointer;opacity:0.6;font-size:16px;margin:0 8px">🚫</div>
                 <div class="odc__close" id="odc-close">✕</div>
             </div>
             <div class="odc__content" id="odc-content"></div>
@@ -83,6 +85,7 @@ export class Renderer {
             ovTitle: root.querySelector('#odc-ov-title'),
             ovBody: root.querySelector('#odc-ov-body'),
             closeBtn: root.querySelector('#odc-close'),
+            clearBtn: root.querySelector('#odc-clear'),
             ovCloseBtn: root.querySelector('#odc-ov-close'),
             search: root.querySelector('#odc-search')
         };
@@ -93,6 +96,17 @@ export class Renderer {
             t.onclick = () => this.switchTab(t.dataset.tab || 'console');
         });
         this.dom.closeBtn.onclick = () => this.toggle();
+        this.dom.clearBtn.onclick = () => {
+            const tab = this.store.state.activeTab;
+            if (tab === 'console') this.store.clearLogs();
+            if (tab === 'network') this.store.clearRequests();
+            if (tab === 'mocks') {
+                if (confirm('Delete all Mocks?')) {
+                    this.store.state.mocks = [];
+                    this.store.notify(); // Direct state mod for brevity here, ideally add clearMocks to store
+                }
+            }
+        };
         this.dom.ovCloseBtn.onclick = () => this.dom.overlay.style.display = 'none';
 
         this.dom.cmd.addEventListener('keypress', (e: KeyboardEvent) => {
@@ -134,6 +148,11 @@ export class Renderer {
             this.dom.search.style.display = showSearch ? 'block' : 'none';
         }
 
+        const showClear = ['console', 'network', 'mocks'].includes(tab);
+        if (this.dom.clearBtn) {
+            this.dom.clearBtn.style.display = showClear ? 'block' : 'none';
+        }
+
         // Toggle Input Box visibility
         if (this.dom.inputBox) {
             this.dom.inputBox.style.display = tab === 'console' ? 'block' : 'none';
@@ -154,12 +173,12 @@ export class Renderer {
             this.renderConsoleTab();
         } else if (tab === 'network') {
             const reqs = this.store.getFilteredRequests();
-            // Network implies complexity (sort, filter), so simple re-render is safer for now 
-            // unless we optimize heavily. Let's keep network simple or optimize later.
-            // For now, let's keep it robust by clearing.
             this.dom.content.innerHTML = '';
             if (!reqs.length) this.dom.content.innerHTML = '<div style="padding:20px;text-align:center;color:#52525b">No traffic</div>';
             reqs.forEach(r => this.renderNetRow(r));
+        } else if (tab === 'mocks') {
+            this.dom.content.innerHTML = '';
+            this.renderMocks();
         } else if (tab === 'storage') {
             this.dom.content.innerHTML = '';
             this.renderStorage();
@@ -308,6 +327,75 @@ export class Renderer {
         </div>
         <div style="padding:0 15px;font-size:10px;color:#52525b;word-break:break-all">${navigator.userAgent}</div>
       `;
+    }
+
+    renderMocks() {
+        const mocks = this.store.state.mocks;
+        const panel = document.createElement('div');
+        panel.innerHTML = `
+            <div class="odc__section" style="padding:0 12px;display:flex;justify-content:space-between;align-items:center">
+                ACTIVE MOCKS 
+                <button id="odc-add-mock" style="background:#3b82f6;border:none;color:white;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px">+ Add</button>
+            </div>
+        `;
+
+        if (mocks.length === 0) {
+            panel.innerHTML += '<div style="padding:12px;color:#52525b;font-style:italic">No active mocks</div>';
+        }
+
+        mocks.forEach(m => {
+            const row = document.createElement('div');
+            row.className = 'odc__row';
+            row.style.justifyContent = 'space-between';
+            row.style.alignItems = 'center';
+
+            row.innerHTML = `
+                <div style="display:flex;flex-direction:column;gap:2px">
+                    <div style="font-weight:bold;color:${m.active ? '#34d399' : '#52525b'}">${m.method.toUpperCase()} ${m.urlPattern}</div>
+                    <div style="font-size:10px;color:#71717a">Status: ${m.status}, Delay: ${m.delay || 0}ms</div>
+                </div>
+                <div style="display:flex;gap:8px">
+                    <button class="odc-toggle-mock" style="background:${m.active ? '#10b981' : '#3f3f46'};border:none;color:white;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:9px">${m.active ? 'ON' : 'OFF'}</button>
+                    <button class="odc-del-mock" style="background:#ef4444;border:none;color:white;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:9px">×</button>
+                </div>
+            `;
+
+            const btnToggle = row.querySelector('.odc-toggle-mock') as HTMLElement;
+            btnToggle.onclick = () => this.store.toggleMock(m.id);
+
+            const btnDel = row.querySelector('.odc-del-mock') as HTMLElement;
+            btnDel.onclick = () => this.store.removeMock(m.id);
+
+            row.onclick = (e) => {
+                if (e.target !== btnToggle && e.target !== btnDel) {
+                    alert(`Response Body:\n${m.responseBody}`);
+                }
+            };
+
+            panel.appendChild(row);
+        });
+
+        const addBtn = panel.querySelector('#odc-add-mock') as HTMLElement;
+        addBtn.onclick = () => {
+            const url = prompt("URL Pattern (e.g. /api/login or *users*):", "/api/test");
+            if (!url) return;
+            const status = prompt("Status Code:", "200");
+            const body = prompt("Response JSON:", '{"success":true}');
+
+            if (url && status && body) {
+                this.store.addMock({
+                    id: Math.random().toString(36).substr(2),
+                    active: true,
+                    method: '*',
+                    urlPattern: url,
+                    status: parseInt(status),
+                    responseBody: body,
+                    delay: 500
+                });
+            }
+        };
+
+        this.dom.content.appendChild(panel);
     }
 
     renderStorage() {

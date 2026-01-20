@@ -1,3 +1,4 @@
+
 import { Renderer } from '../src/ui/renderer';
 import { Store } from '../src/store';
 
@@ -209,5 +210,100 @@ describe('Renderer', () => {
 
         clearBtn?.click();
         expect(clearSpy).toHaveBeenCalled();
+    });
+
+    test('mocks ui interactions', () => {
+        // Setup initial mocks
+        store.addMock({ id: '1', active: true, method: 'GET', urlPattern: '/test', status: 200, responseBody: '{}' });
+
+        renderer.switchTab('mocks');
+        renderer.toggle();
+
+        // Check list
+        expect(renderer.dom.content.innerHTML).toContain('/test');
+
+        // Toggle
+        const toggleBtn = document.querySelector('.odc-toggle-mock') as HTMLElement;
+        toggleBtn.click();
+        expect(store.state.mocks[0].active).toBe(false);
+
+        // Delete
+        window.confirm = jest.fn(() => true); // If delete uses confirm? It doesn't in current code, but good practice
+        const delBtn = document.querySelector('.odc-del-mock') as HTMLElement;
+        delBtn.click();
+        expect(store.state.mocks.length).toBe(0);
+
+        // Add specific interaction (prompts)
+        window.prompt = jest.fn()
+            .mockReturnValueOnce('/new-api') // URL
+            .mockReturnValueOnce('201')      // Status
+            .mockReturnValueOnce('{"id":1}'); // Body
+
+        const addBtn = document.getElementById('odc-add-mock')!;
+        addBtn.click();
+
+        expect(store.state.mocks.length).toBe(1);
+        expect(store.state.mocks[0].urlPattern).toBe('/new-api');
+    });
+
+    test('renders system tab memory', () => {
+        // Mock performance.memory
+        Object.defineProperty(window.performance, 'memory', {
+            value: { usedJSHeapSize: 10 * 1024 * 1024 },
+            configurable: true
+        });
+
+        renderer.switchTab('system');
+        renderer.toggle(); // Triggers render
+
+        expect(renderer.dom.content.innerHTML).toContain('10 MB');
+    });
+
+    test('clears active tab data', () => {
+        renderer.switchTab('console');
+        store.addLog({ type: 'log', args: ['A'], time: new Date() }, 10);
+        renderer.toggle();
+
+        // Click header clear button
+        const clearHeaderBtn = document.getElementById('odc-clear')!;
+        clearHeaderBtn.click();
+
+        expect(store.state.logs.length).toBe(0);
+
+        renderer.switchTab('network');
+        store.addRequest({ id: '1', url: '/', status: 200 } as any);
+        clearHeaderBtn.click();
+        expect(Object.keys(store.state.reqs).length).toBe(0);
+
+        // Mocks clear
+        renderer.switchTab('mocks');
+        store.addMock({ id: '1', active: true, method: '*', urlPattern: 'a', status: 200, responseBody: '{}' });
+        window.confirm = jest.fn(() => true);
+        clearHeaderBtn.click();
+        expect(store.state.mocks.length).toBe(0);
+    });
+
+    test('renders error objects with stack', () => {
+        const err = new Error('Test Error');
+        err.stack = 'Error: Test Error\n    at test position';
+
+        const el = renderer.renderObject(err);
+        expect(el.nodeName).toBe('DETAILS');
+        expect(el.innerHTML).toContain('Test Error');
+        expect(el.innerHTML).toContain('test position');
+
+        // Also test plain throw object
+        const el2 = renderer.renderObject({ throwing: true });
+    });
+
+    test('renders large object with show more', () => {
+        const largeObj: Record<string, number> = {};
+        for (let i = 0; i < 60; i++) largeObj['key' + i] = i;
+
+        const el = renderer.renderObject(largeObj) as HTMLDetailsElement;
+        el.open = true;
+        el.dispatchEvent(new Event('toggle'));
+
+        expect(el.innerHTML).toContain('Show 10 more');
     });
 });

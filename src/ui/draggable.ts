@@ -69,10 +69,10 @@ export class Draggable {
                 move(e.clientX, e.clientY);
             }
         });
-        window.addEventListener('mouseup', (e) => {
+        window.addEventListener('mouseup', () => {
             if (this.isDragging) endMouse();
         });
-        this.element.addEventListener('mouseup', (e) => {
+        this.element.addEventListener('mouseup', () => {
             if (!this.isDragging) endMouse();
         });
     }

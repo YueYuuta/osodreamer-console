@@ -1,78 +1,79 @@
 # OsoDreamer Console
 
-A lightweight, framework-agnostic developer console for web applications. 
-Perfect for mobile debugging, staging environments, or testing on devices where you don't have access to DevTools.
+Una consola de desarrollador ligera y agnóstica del framework para aplicaciones web.
+Perfecta para depuración en móvil, entornos de staging o pruebas en dispositivos donde no tienes acceso a las DevTools.
 
 ![OsoDreamer Console Demo](https://via.placeholder.com/800x400?text=OsoDreamer+Console+Preview)
 
 > [!WARNING]
-> **DEVELOPMENT ONLY**: This library interacts with the `eval()` function and intercepts protected network headers for debugging purposes. It is **NOT** secure for production environments. Ensure this code is stripped or conditionally imported only in `development` or `staging` builds.
+> **SOLO PARA DESARROLLO**: Esta librería interactúa con la función `eval()` e intercepta cabeceras de red protegidas para fines de depuración. **NO** es segura para entornos de producción. Asegúrate de eliminar este código o importarlo condicionalmente solo en builds de `development` o `staging`.
 
-## Features
+## Características
 
-- 🖥️ **Virtual Console**: Captures `console.log`, `warn`, `error`, and `info`.
-- 🌐 **Network Inspector**: Intercepts `Fetch` and `XHR` requests with header/body details.
-- ⚡ **System Monitor**: Real-time FPS and Memory usage tracking.
-- 💾 **Storage Viewer**: View and manage `localStorage` and `sessionStorage`.
-- 🎨 **Fully Customizable**: Theming support and draggable trigger button.
-- 📱 **Mobile Optimized**: Touch-friendly interface.
-- � **TypeScript Ready**: Written in TS with full type definitions included.
-- �📦 **Zero Dependencies**: Lightweight and easy to integrate.
+- 🖥️ **Consola Virtual**: Captura `console.log`, `warn`, `error`, e `info` con **Deduplicación** y **Stack Traces de Error**.
+- 🌐 **Inspector de Red**: Intercepta peticiones `Fetch` y `XHR` con detalles de cabeceras y cuerpo.
+- 🃏 **Sistema de Mocking**: Crea, alterna y gestiona mocks de red directamente desde la UI o código.
+- ⚡ **Monitor del Sistema**: Rastreo de FPS y uso de Memoria en tiempo real.
+- 💾 **Visor de Almacenamiento**: Ve y gestiona `localStorage` y `sessionStorage`.
+- 🎨 **Totalmente Personalizable**: Soporte para temas y botón disparador arrastrable.
+- 📱 **Optimizado para Móvil**: Interfaz amigable al tacto.
+- 🔷 **Listo para TypeScript**: Escrito en TS con definiciones de tipos completas incluidas.
+- 📦 **Cero Dependencias**: Ligero y fácil de integrar.
 
-## Installation
+## Instalación
 
 ```bash
 npm install osodreamer-console
 ```
 
-## Usage
+## Uso
 
-Import and initialize the console at the entry point of your application (e.g., `main.ts`, `index.js`).
+Importa e inicializa la consola en el punto de entrada de tu aplicación (e.g., `main.ts`, `index.js`).
 
 ```javascript
 import OsoDreamerConsole from 'osodreamer-web-console';
 
-// Recommended Initialization (Static method avoids "unused variable" warnings)
+// Inicialización Recomendada (El método estático evita advertencias de "variable no usada")
 OsoDreamerConsole.init();
 ```
 
-### TypeScript Usage
+### Uso con TypeScript
 
-The library includes built-in type definitions. You can import interfaces for strictly typed configuration:
+La librería incluye definiciones de tipos integradas. Puedes importar interfaces para una configuración estrictamente tipada:
 
 ```typescript
 import OsoDreamerConsole, { ConsoleConfig } from 'osodreamer-web-console';
 
 const config: ConsoleConfig = {
     theme: {
-        primary: '#6366f1' // Auto-complete enabled
+        primary: '#6366f1' // Auto-completado habilitado
     }
 };
 
 OsoDreamerConsole.init(config);
 ```
 
-### With Configuration
+### Con Configuración
 
-You can customize the console's behavior and appearance:
+Puedes personalizar el comportamiento y apariencia de la consola:
 
 ```javascript
 OsoDreamerConsole.init({
-    maxLogs: 200, // Limit stored logs
+    maxLogs: 200, // Límite de logs almacenados
     theme: {
-        primary: '#10b981',    // Brand/Accent color
+        primary: '#10b981',    // Color de Acento/Marca
         background: 'rgba(22, 22, 24, 0.95)',
         text: '#ecfdf5'
     },
     trigger: {
         position: 'bottom-right', // 'bottom-left', 'top-right', 'top-left'
         color: '#059669',
-        text: 'DEBUG' // Optional: Changes floating dot to a text button
+        text: 'DEBUG' // Opcional: Cambia el punto flotante por un botón de texto
     }
 });
 ```
 
-To use it in the browser directly (via CDN or UMD):
+Para usarlo directamente en el navegador (vía CDN o UMD):
 
 ```html
 <script src="path/to/osodreamer-console.umd.js"></script>
@@ -81,41 +82,92 @@ To use it in the browser directly (via CDN or UMD):
 </script>
 ```
 
-## Configuration API
+## API de Configuración
 
-| Option | Type | Default | Description |
-|osodreamer-console|---|---|---|
-| `maxLogs` | `number` | `300` | Maximum number of log entries to keep in memory. |
-| `theme` | `object` | `{}` | Customize colors. |
-| `trigger` | `object` | `{}` | Customize the floating button. |
+| Opción | Tipo | Por Defecto | Descripción |
+|---|---|---|---|
+| `maxLogs` | `number` | `300` | Número máximo de entradas de log a mantener en memoria. |
+| `theme` | `object` | `{}` | Personalizar colores. |
+| `trigger` | `object` | `{}` | Personalizar el botón flotante. |
 
-### Theme Object
+### Objeto Theme
 ```typescript
 {
-    primary?: string;    // Accent color (default: blue)
-    background?: string; // Panel background
-    text?: string;       // Main text color
+    primary?: string;    // Color de acento (por defecto: azul)
+    background?: string; // Fondo del panel
+    text?: string;       // Color de texto principal
 }
 ```
 
-### Trigger Object
+### Objeto Trigger
 ```typescript
 {
-    color?: string;      // Button background color
-    text?: string;       // If set, renders text instead of a dot
+    color?: string;      // Color de fondo del botón
+    text?: string;       // Si se establece, renderiza texto en lugar de un punto
     position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 }
 ```
 
-## Development
+## Network Mocking (Simulación de Red) 🃏
 
-To run the project locally:
+OsoDreamer Console te permite interceptar y simular (mock) peticiones HTTP (`fetch` o `XHR`) directamente desde el navegador. Esto es útil para simular respuestas de API, probar estados de error o trabajar sin conexión.
 
-1. Clone the repo
-2. Install dependencies: `npm install`
-3. Run dev server: `npm run dev`
-4. Run tests: `npm run test:coverage`
+### 1. API Programática
 
-## License
+Puedes programar mocks al inicializar o en tiempo de ejecución.
+
+```typescript
+// Añadir una regla de mock
+OsoDreamerConsole.store.addMock({
+  id: 'mock-auth',
+  active: true,
+  method: 'POST', // 'GET', 'POST', 'PUT', 'DELETE' o '*'
+  urlPattern: '/api/login', // Strings son tratados como coincidencias "contiene"
+  status: 200,
+  responseBody: '{"token": "fake-jwt-123", "user": "admin"}',
+  delay: 1000 // Simular 1s de latencia de red
+});
+
+// Mockear un Error 500
+OsoDreamerConsole.store.addMock({
+  id: 'mock-error',
+  active: true,
+  method: 'GET',
+  urlPattern: '/api/users',
+  status: 500,
+  responseBody: '{"error": "Error Interno del Servidor"}',
+  delay: 200
+});
+
+// Alternar un mock por ID
+OsoDreamerConsole.store.toggleMock('mock-auth');
+
+// Eliminar un mock
+OsoDreamerConsole.store.removeMock('mock-error');
+```
+
+### 2. Gestión desde la UI
+
+También puedes gestionar mocks visualmente sin escribir código:
+
+1. Abre la Consola y navega a la pestaña **Mocks**.
+2. Haz clic en el botón **+ Add** en la cabecera.
+3. Rellena los campos:
+    - **URL Pattern**: Parte de la URL a coincidir (e.g., `/api`).
+    - **Status Code**: Estado HTTP (e.g., `200`, `404`).
+    - **Response JSON**: El cuerpo a devolver (e.g., `{"ok":true}`).
+4. Usa el botón **ON/OFF** para habilitar o deshabilitar reglas específicas al instante.
+5. Haz clic en cualquier fila de mock para inspeccionar el cuerpo completo de la respuesta.
+
+## Desarrollo
+
+Para ejecutar el proyecto localmente:
+
+1. Clona el repo
+2. Instala dependencias: `npm install`
+3. Ejecuta el servidor de desarrollo: `npm run dev`
+4. Ejecuta tests: `npm run test:coverage`
+
+## Licencia
 
 MIT © [YueYuuta](https://github.com/YueYuuta)

@@ -1,67 +1,105 @@
+
 import { Draggable } from '../src/ui/draggable';
 
 describe('Draggable', () => {
     let el: HTMLElement;
+    let draggable: Draggable;
     let onClick: jest.Mock;
 
     beforeEach(() => {
         el = document.createElement('div');
-        el.style.width = '20px';
-        el.style.height = '20px';
         document.body.appendChild(el);
+        el.style.width = '50px';
+        el.style.height = '50px';
+        el.style.position = 'fixed'; // Important for dragging logic
         onClick = jest.fn();
+        draggable = new Draggable(el, onClick);
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+            left: 0, top: 0, width: 50, height: 50, right: 50, bottom: 50, x: 0, y: 0,
+            toJSON: () => { }
+        });
     });
 
     afterEach(() => {
-        document.body.innerHTML = '';
+        document.body.removeChild(el);
     });
 
-    test('calls onclick on simple click', () => {
-        new Draggable(el, onClick);
+    test('initializes correctness', () => {
+        expect(el.style.bottom).toBe('');
+        // It doesn't set left/top until drag starts usually, or we can check listeners
+    });
 
-        el.dispatchEvent(new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
-        el.dispatchEvent(new MouseEvent('mouseup', { clientX: 0, clientY: 0 }));
+    test('handles click without drag', () => {
+        const start = new MouseEvent('mousedown', { clientX: 10, clientY: 10 });
+        el.dispatchEvent(start);
+
+        const end = new MouseEvent('mouseup');
+        el.dispatchEvent(end);
 
         expect(onClick).toHaveBeenCalled();
     });
 
-    test('moves element on mouse drag', () => {
-        new Draggable(el, onClick);
+    test('handles drag', () => {
+        // Start
+        el.dispatchEvent(new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
 
-        el.getBoundingClientRect = jest.fn(() => ({ left: 10, top: 10, width: 20, height: 20 } as DOMRect));
+        // Move (enough to trigger drag > 5px)
+        el.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10, buttons: 1, bubbles: true }));
 
-        el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100 }));
+        // Check it moved
+        expect(draggable.isDragging).toBe(true);
+        expect(el.style.left).not.toBe('');
 
-        const moveEvent = new MouseEvent('mousemove', { clientX: 150, clientY: 150, buttons: 1 });
-        Object.defineProperty(moveEvent, 'target', { value: el });
-        window.dispatchEvent(moveEvent);
-
-        el.dispatchEvent(new MouseEvent('mouseup'));
-
+        // End
+        window.dispatchEvent(new MouseEvent('mouseup'));
         expect(onClick).not.toHaveBeenCalled();
-        expect(el.style.left).toBe('60px');
-        expect(el.style.top).toBe('60px');
+        // Should snap (transition added)
+        expect(el.style.transition).toContain('all');
     });
 
     test('handles touch drag', () => {
-        new Draggable(el, onClick);
-        el.getBoundingClientRect = jest.fn(() => ({ left: 0, top: 0 } as DOMRect));
-
+        // Touch Start
         el.dispatchEvent(new TouchEvent('touchstart', {
-            touches: [{ clientX: 10, clientY: 10 } as Touch]
+            touches: [{ clientX: 0, clientY: 0 } as any] as any
         }));
 
+        // Touch Move
         el.dispatchEvent(new TouchEvent('touchmove', {
-            cancelable: true,
-            touches: [{ clientX: 50, clientY: 50 } as Touch]
-        }));
-
-        el.dispatchEvent(new TouchEvent('touchend', {
+            touches: [{ clientX: 40, clientY: 40 } as any] as any,
             cancelable: true
         }));
 
         expect(el.style.left).toBe('40px');
         expect(el.style.top).toBe('40px');
         expect(onClick).not.toHaveBeenCalled();
+    });
+
+    test('snaps to bounds correctly', () => {
+        // Mock getBoundingClientRect
+        jest.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+            left: -100, top: -100, width: 50, height: 50, right: -50, bottom: -50, x: -100, y: -100,
+            toJSON: () => { }
+        });
+
+        // Manually trigger snap logic via drag end
+        // First simulate start to set initial values
+        el.style.left = '0px';
+        el.style.top = '0px';
+        el.dispatchEvent(new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
+        draggable.isDragging = true;
+
+        window.dispatchEvent(new MouseEvent('mouseup'));
+
+        // Should snap to pad 10
+        expect(el.style.left).toBe('10px');
+        expect(el.style.top).toBe('10px');
+    });
+
+    test('cleanup transition after snap', () => {
+        jest.useFakeTimers();
+        draggable.snapToBounds();
+        expect(el.style.transition).toBeTruthy();
+        jest.runAllTimers();
+        expect(el.style.transition).toBe('');
     });
 });

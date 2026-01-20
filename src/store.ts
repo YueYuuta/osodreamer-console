@@ -1,4 +1,4 @@
-import { LogEntry, NetworkRequest, StoreState } from './types';
+import { LogEntry, NetworkRequest, StoreState, MockRule } from './types';
 
 export class Store {
     state: StoreState;
@@ -8,11 +8,38 @@ export class Store {
         this.state = {
             logs: [],
             reqs: {},
+            mocks: [],
             fps: 0,
             isOpen: false,
             activeTab: 'console',
             searchQuery: ''
         };
+    }
+
+    addMock(mock: MockRule) {
+        this.state.mocks.push(mock);
+        this.notify();
+    }
+
+    removeMock(id: string) {
+        this.state.mocks = this.state.mocks.filter(m => m.id !== id);
+        this.notify();
+    }
+
+    toggleMock(id: string) {
+        const m = this.state.mocks.find(m => m.id === id);
+        if (m) {
+            m.active = !m.active;
+            this.notify();
+        }
+    }
+
+    updateMock(id: string, updates: Partial<MockRule>) {
+        const m = this.state.mocks.find(m => m.id === id);
+        if (m) {
+            Object.assign(m, updates);
+            this.notify();
+        }
     }
 
     subscribe(listener: Function) {
@@ -110,5 +137,15 @@ export class Store {
                 method.includes(this.state.searchQuery) ||
                 status.includes(this.state.searchQuery);
         });
+    }
+
+    clearLogs() {
+        this.state.logs = [];
+        this.notify();
+    }
+
+    clearRequests() {
+        this.state.reqs = {};
+        this.notify();
     }
 }

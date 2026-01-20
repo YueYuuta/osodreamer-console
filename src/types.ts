@@ -41,9 +41,20 @@ export interface ConsoleConfig {
     trigger?: TriggerConfig;
 }
 
+export interface MockRule {
+    id: string;
+    active: boolean;
+    method: string; // GET, POST, or *
+    urlPattern: string; // e.g. /api/users
+    status: number;
+    responseBody: string; // JSON string
+    delay?: number; // ms
+}
+
 export interface StoreState {
     logs: LogEntry[];
     reqs: Record<string, NetworkRequest>;
+    mocks: MockRule[];
     fps: number;
     isOpen: boolean;
     activeTab: string;

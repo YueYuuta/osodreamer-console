@@ -38,6 +38,25 @@ export class NetworkHook {
             req.reqBody = this.parseBody(args[1]?.body);
             this.store.addRequest(req);
 
+            // Mock Check
+            const mock = this.findMock(method, url);
+            if (mock) {
+                if (mock.delay) await new Promise(r => setTimeout(r, mock.delay));
+
+                const mockResBody = this.parseBody(mock.responseBody);
+                this.store.updateRequest(id, {
+                    status: mock.status,
+                    duration: Date.now() - req._start,
+                    resBody: mockResBody,
+                    resHeaders: { 'x-mocked-by': 'osodreamer-console' }
+                });
+
+                return new Response(mock.responseBody, {
+                    status: mock.status,
+                    headers: { 'Content-Type': 'application/json', 'x-mocked-by': 'osodreamer-console' }
+                });
+            }
+
             try {
                 const res = await originalFetch(...args);
                 const clone = res.clone();
@@ -99,6 +118,31 @@ export class NetworkHook {
                 req.reqHeaders = meta.reqHeaders;
                 req.reqBody = self.parseBody(body);
                 self.store.addRequest(req);
+
+                // Mock Check
+                const mock = self.findMock(meta.method, meta.url);
+                if (mock) {
+                    setTimeout(() => {
+                        const mockResBody = self.parseBody(mock.responseBody);
+                        self.store.updateRequest(meta.id, {
+                            status: mock.status,
+                            duration: Date.now() - req._start,
+                            resBody: mockResBody,
+                            resHeaders: { 'x-mocked-by': 'osodreamer-console' }
+                        });
+
+                        // Fake XHR Properties
+                        Object.defineProperty(this, 'status', { value: mock.status });
+                        Object.defineProperty(this, 'readyState', { value: 4 });
+                        Object.defineProperty(this, 'responseText', { value: mock.responseBody });
+                        Object.defineProperty(this, 'response', { value: mock.responseBody });
+                        Object.defineProperty(this, 'getAllResponseHeaders', { value: () => 'content-type: application/json\r\nx-mocked-by: osodreamer-console' });
+
+                        this.dispatchEvent(new Event('readystatechange'));
+                        this.dispatchEvent(new Event('load'));
+                    }, mock.delay || 10);
+                    return; // Stop real request
+                }
 
                 this.addEventListener('load', function () {
                     const updates: Partial<NetworkRequest> = {
@@ -181,5 +225,13 @@ export class NetworkHook {
             return `[Blob: ${body.type}, ${body.size} bytes]`;
         }
         return body;
+    }
+
+    private findMock(method: string, url: string) {
+        return this.store.state.mocks.find(m =>
+            m.active &&
+            (m.method === '*' || m.method.toUpperCase() === method.toUpperCase()) &&
+            url.includes(m.urlPattern)
+        );
     }
 }

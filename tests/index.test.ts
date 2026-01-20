@@ -1,17 +1,43 @@
+
 import OsoDreamerConsole from '../src/index';
 
-describe('Index', () => {
-    test('starts system monitor loop', () => {
+describe('OsoDreamerConsole', () => {
+    beforeEach(() => {
+        document.body.innerHTML = '';
+        // Mock console.log to avoid noise
+        jest.spyOn(console, 'log').mockImplementation(() => { });
+    });
+
+    test('initializes via constructor', () => {
+        const odc = new OsoDreamerConsole();
+        expect(odc).toBeInstanceOf(OsoDreamerConsole);
+        expect(odc.store).toBeDefined();
+    });
+
+    test('initializes via static method', () => {
+        const odc = OsoDreamerConsole.init({ maxLogs: 500 });
+        expect(odc.config.maxLogs).toBe(500);
+        expect(document.getElementById('odc-btn')).toBeTruthy();
+    });
+
+    test('starts system monitor', async () => {
         jest.useFakeTimers();
-        const consoleInstance = new OsoDreamerConsole();
-        const renderSpy = jest.spyOn(consoleInstance.renderer, 'render');
+        const odc = new OsoDreamerConsole();
 
-        consoleInstance.store.state.isOpen = true;
-        consoleInstance.store.state.activeTab = 'system';
+        // Simulate open system tab
+        odc.store.state.isOpen = true;
+        odc.store.state.activeTab = 'system';
 
-        jest.advanceTimersByTime(2000);
+        const renderSpy = jest.spyOn(odc.renderer, 'render');
 
-        expect(consoleInstance.store.state.fps).toBeGreaterThanOrEqual(0);
+        // Fast forward time to trigger loop
+        jest.advanceTimersByTime(1100);
+
         expect(renderSpy).toHaveBeenCalled();
+    });
+
+    test('attaches to window', () => {
+        // @ts-ignore
+        expect(window.OsoDreamerConsole).toBe(OsoDreamerConsole);
     });
 });
