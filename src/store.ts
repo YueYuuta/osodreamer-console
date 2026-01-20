@@ -27,6 +27,21 @@ export class Store {
     }
 
     addLog(log: LogEntry, maxLogs: number) {
+        const lastLog = this.state.logs[this.state.logs.length - 1];
+        const isDuplicate = lastLog &&
+            lastLog.type === log.type &&
+            this.compareArgs(lastLog.args, log.args);
+
+        if (isDuplicate) {
+            lastLog.count = (lastLog.count || 1) + 1;
+            lastLog.time = log.time; // Update time to latest
+            if (this.state.isOpen && this.state.activeTab === 'console') {
+                this.notify();
+            }
+            return;
+        }
+
+        log.count = 1;
         this.state.logs.push(log);
         if (this.state.logs.length > maxLogs) {
             this.state.logs.shift();
@@ -34,6 +49,15 @@ export class Store {
 
         if (this.state.isOpen && this.state.activeTab === 'console') {
             this.notify();
+        }
+    }
+
+    private compareArgs(a: any[], b: any[]): boolean {
+        if (a.length !== b.length) return false;
+        try {
+            return JSON.stringify(a) === JSON.stringify(b);
+        } catch {
+            return false; // Circular refs or errors, assume different
         }
     }
 

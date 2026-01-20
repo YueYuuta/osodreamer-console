@@ -1,12 +1,13 @@
 {
-    "name": "osodreamer-console",
-    "version": "1.0.0",
+    "name": "osodreamer-web-console",
+    "version": "1.0.1",
     "description": "A lightweight, framework-agnostic developer console for web applications.",
     "main": "./dist/osodreamer-console.umd.js",
     "module": "./dist/osodreamer-console.es.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/osodreamer-console.es.js",
             "require": "./dist/osodreamer-console.umd.js"
         }
@@ -27,8 +28,16 @@
         "developer-tools",
         "logger"
     ],
-    "author": "",
-    "license": "ISC",
+    "author": "YueYuuta",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/YueYuuta/osodreamer-console.git"
+    },
+    "bugs": {
+        "url": "https://github.com/YueYuuta/osodreamer-console/issues"
+    },
+    "homepage": "https://github.com/YueYuuta/osodreamer-console#readme",
     "devDependencies": {
         "@types/jest": "^29.5.12",
         "@types/node": "^20.11.24",

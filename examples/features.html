@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OsoDreamer Console - Features Demo</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #222;
+            color: #eee;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Console Features Demo</h1>
+
+    <div class="group">
+        <h2>1. Log Deduplication</h2>
+        <p>Clicking this will log "Hello World" 10 times instantly. Notice the badge count instead of 10 rows.</p>
+        <button onclick="triggerLoop()" style="background:#3b82f6;color:white">Log "Hello" x10</button>
+        <button onclick="triggerObjectLoop()" style="background:#60a5fa;color:white">Log Object x5</button>
+    </div>
+
+    <div class="group">
+        <h2>2. Error Handling</h2>
+        <p>These buttons throw real errors. Open the console to see the stack trace rendering.</p>
+        <button onclick="throwError()" style="background:#ef4444;color:white">Throw Error</button>
+        <button onclick="throwAsyncError()" style="background:#f87171;color:white">Async Error (Promise)</button>
+    </div>
+
+    <div class="group">
+        <h2>3. Deep Objects</h2>
+        <button onclick="logDeepObject()" style="background:#10b981;color:white">Log Deep Object</button>
+    </div>
+
+    <script src="../dist/osodreamer-console.umd.js"></script>
+    <script>
+        // Initialize Console
+        const consoleInstance = new OsoDreamerConsole({
+            trigger: { position: 'bottom-right', color: '#3b82f6' }
+        });
+
+        function triggerLoop() {
+            for (let i = 0; i < 10; i++) {
+                console.log("Hello World");
+            }
+            console.log("Done loop");
+        }
+
+        function triggerObjectLoop() {
+            const obj = { id: 1, status: 'ok' };
+            for (let i = 0; i < 5; i++) {
+                console.log("Status update:", obj);
+            }
+        }
+
+        function throwError() {
+            function innerFunction() {
+                throw new Error("Critical System Failure: Database Disconnected");
+            }
+            innerFunction();
+        }
+
+        function throwAsyncError() {
+            console.log("Starting async operation...");
+            setTimeout(() => {
+                Promise.reject(new Error("Async Request Timeout (500ms)"));
+            }, 500);
+        }
+
+        function logDeepObject() {
+            console.log({
+                user: {
+                    name: "Admin",
+                    permissions: ["read", "write", "delete"],
+                    metadata: {
+                        lastLogin: new Date(),
+                        session: { id: "xyz-123", active: true }
+                    }
+                },
+                system: {
+                    status: "online",
+                    metrics: { cpu: 23, memory: "128MB" }
+                }
+            });
+        }
+
+        console.log("Demo Loaded. Click buttons to test features.");
+    </script>
+</body>
+
+</html>

@@ -4,6 +4,7 @@ export interface LogEntry {
     type: LogType;
     args: any[];
     time: Date;
+    count?: number;
 }
 
 export interface NetworkRequest {

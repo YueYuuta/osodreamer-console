@@ -5,6 +5,8 @@ import { ErrorHook } from './hooks/error';
 import { NetworkHook } from './hooks/network';
 import { ConsoleConfig } from './types';
 
+export * from './types';
+
 export default class OsoDreamerConsole {
     store: Store;
     renderer: Renderer;
@@ -12,6 +14,10 @@ export default class OsoDreamerConsole {
     errorHook: ErrorHook;
     networkHook: NetworkHook;
     config: ConsoleConfig;
+
+    static init(config?: ConsoleConfig): OsoDreamerConsole {
+        return new OsoDreamerConsole(config);
+    }
 
     constructor(config: ConsoleConfig = {}) {
         this.config = { maxLogs: 300, ...config };

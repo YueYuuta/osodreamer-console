@@ -169,7 +169,12 @@ export class Renderer {
         const row = document.createElement('div');
         row.className = `odc__row odc__row--${log.type}`;
         const timeStr = log.time.toLocaleTimeString([], { hour12: false }).split(' ')[0];
-        row.innerHTML = `<span class="odc__time">${timeStr}</span>`;
+
+        let html = `<span class="odc__time">${timeStr}</span>`;
+        if (log.count && log.count > 1) {
+            html = `<span class="odc__badge" style="background:#ef4444;color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;margin-right:6px;font-weight:bold">${log.count}</span>` + html;
+        }
+        row.innerHTML = html;
 
         log.args.forEach(arg => {
             const el = this.renderObject(arg);
@@ -284,7 +289,6 @@ export class Renderer {
         createSec('Session Storage', sessionStorage);
     }
 
-    // --- HELPERS ---
     renderObject(obj: any): HTMLElement {
         if (obj === null) return this._sp('null', 'od-null');
         if (obj === undefined) return this._sp('undefined', 'od-null');
@@ -294,6 +298,29 @@ export class Renderer {
 
         // Handle Function
         if (typeof obj === 'function') return this._sp(`f ${obj.name || '()'}`, 'od-key');
+
+        // Handle Error Objects Explicitly
+        if (obj instanceof Error) {
+            const det = document.createElement('details');
+            det.style.display = 'inline-block';
+            det.style.verticalAlign = 'top';
+
+            const sum = document.createElement('summary');
+            sum.style.color = '#ef4444';
+            sum.textContent = `${obj.name}: ${obj.message}`;
+            det.appendChild(sum); // Clicking summary toggles details
+
+            const stack = document.createElement('div');
+            stack.style.whiteSpace = 'pre-wrap';
+            stack.style.fontSize = '10px';
+            stack.style.color = '#fca5a5';
+            stack.style.marginTop = '4px';
+            stack.style.paddingLeft = '10px';
+            stack.textContent = obj.stack || '(No stack trace)';
+
+            det.appendChild(stack);
+            return det;
+        }
 
         const isArr = Array.isArray(obj);
         let label = '';
@@ -345,27 +372,39 @@ export class Renderer {
 
     applyTrigger() {
         const btn = this.dom.btn;
-        if (!btn || !this.config.trigger) return;
+        if (!btn) return;
 
-        // Position
-        const pos = this.config.trigger.position || 'bottom-right';
-        btn.style.top = 'auto'; btn.style.bottom = 'auto'; btn.style.left = 'auto'; btn.style.right = 'auto';
+        const trigger = this.config.trigger || {};
 
-        if (pos.includes('bottom')) btn.style.bottom = '30px';
-        if (pos.includes('top')) btn.style.top = '30px';
-        if (pos.includes('right')) btn.style.right = '30px';
-        if (pos.includes('left')) btn.style.left = '30px';
+        // Position logic with Inset for consistency
+        const pos = trigger.position || 'bottom-right';
+
+        let inset = 'auto 30px 30px auto'; // Default (bottom-right)
+
+        if (pos === 'bottom-left') inset = 'auto auto 30px 30px';
+        if (pos === 'top-right') inset = '30px 30px auto auto';
+        if (pos === 'top-left') inset = '30px auto auto 30px';
+
+        btn.style.inset = inset;
+
+        // Reset legacy props just in case
+        btn.style.bottom = 'auto'; btn.style.top = 'auto'; btn.style.left = 'auto'; btn.style.right = 'auto';
 
         // Color
-        if (this.config.trigger.color) {
-            btn.style.setProperty('--odc-trigger-bg', this.config.trigger.color);
+        if (trigger.color) {
+            btn.style.setProperty('--odc-trigger-bg', trigger.color);
         }
 
         // Text vs Dot
-        if (this.config.trigger.text) {
-            btn.innerHTML = `<span>${this.config.trigger.text}</span>`;
+        if (trigger.text) {
+            btn.innerHTML = `<span>${trigger.text}</span>`;
             btn.style.width = 'auto';
             btn.style.padding = '0 15px';
+        } else {
+            // Revert to Dot
+            btn.innerHTML = '<div class="odc__dot"></div>';
+            btn.style.width = '48px';
+            btn.style.padding = '0';
         }
     }
 

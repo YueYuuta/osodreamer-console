@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Minimal JS Demo</title>
+    <style>
+        body {
+            background: #f0f0f0;
+            font-family: sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Minimal JS Demo (No Config)</h1>
+    <p>Loading UMD build. Check bottom-left corner.</p>
+
+    <button onclick="console.log('Hello from JS!')">Log Hello</button>
+    <button onclick="console.error('Test Error')">Log Error</button>
+
+    <!-- Load the built library -->
+    <script src="../dist/osodreamer-console.umd.js"></script>
+
+    <script>
+        // Init without config (Default Mode)
+        new window.OsoDreamerConsole();
+    </script>
+</body>
+
+</html>

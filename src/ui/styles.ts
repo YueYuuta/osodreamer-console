@@ -19,6 +19,7 @@ export const STYLES = `
     display: flex; align-items: center; justify-content: center; 
     z-index: 2147483647; cursor: pointer; transition: transform 0.1s;
     touch-action: none;
+    bottom: 30px; right: 30px; /* Explicit defaults for framework compatibility */
     color: #fff; font-weight: bold; font-size: 10px; overflow: hidden;
 }
 .odc__trigger:active { transform: scale(0.95); }
