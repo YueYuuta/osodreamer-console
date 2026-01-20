@@ -27,8 +27,7 @@ describe('NetworkHook', () => {
     });
 
     test('intercepts successful fetch with headers object', async () => {
-        // @ts-ignore
-        mockFetch.mockResolvedValue({
+        (mockFetch as any).mockResolvedValue({
             ok: true, status: 200, headers: new Headers({ 'content-type': 'application/json' }),
             clone: () => ({
                 text: () => Promise.resolve('{"a":1}'),
@@ -48,11 +47,9 @@ describe('NetworkHook', () => {
     });
 
     test('intercepts fetch with invalid URL gracefully', async () => {
-        // @ts-ignore
-        mockFetch.mockResolvedValue({ ok: true, headers: new Headers(), clone: () => ({ text: () => Promise.resolve('') }) });
+        (mockFetch as any).mockResolvedValue({ ok: true, headers: new Headers(), clone: () => ({ text: () => Promise.resolve('') }) });
 
-        // @ts-ignore
-        await window.fetch('not-a-url');
+        await (window as any).fetch('not-a-url');
         const reqs = Object.values(store.state.reqs);
         expect(reqs.length).toBe(1);
         expect(reqs[0].fullUrl).toContain('not-a-url');

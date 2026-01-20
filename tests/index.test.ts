@@ -4,7 +4,7 @@ import OsoDreamerConsole from '../src/index';
 describe('OsoDreamerConsole', () => {
     beforeEach(() => {
         document.body.innerHTML = '';
-        // Mock console.log to avoid noise
+
         jest.spyOn(console, 'log').mockImplementation(() => { });
     });
 
@@ -24,20 +24,19 @@ describe('OsoDreamerConsole', () => {
         jest.useFakeTimers();
         const odc = new OsoDreamerConsole();
 
-        // Simulate open system tab
+
         odc.store.state.isOpen = true;
         odc.store.state.activeTab = 'system';
 
         const renderSpy = jest.spyOn(odc.renderer, 'render');
 
-        // Fast forward time to trigger loop
+
         jest.advanceTimersByTime(1100);
 
         expect(renderSpy).toHaveBeenCalled();
     });
 
     test('attaches to window', () => {
-        // @ts-ignore
-        expect(window.OsoDreamerConsole).toBe(OsoDreamerConsole);
+        expect((window as any).OsoDreamerConsole).toBe(OsoDreamerConsole);
     });
 });

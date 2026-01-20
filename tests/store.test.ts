@@ -26,7 +26,7 @@ describe('Store', () => {
         store.addLog({ type: 'log', args: [circular], time: new Date() }, 100);
         store.setSearchQuery('Circular');
 
-        // Should not throw and should find it
+
         const filtered = store.getFilteredLogs();
         expect(filtered.length).toBe(1);
     });
@@ -36,18 +36,18 @@ describe('Store', () => {
         store.subscribe(spy);
         store.state.isOpen = true;
 
-        // Console Tab active
+
         store.state.activeTab = 'console';
         store.addLog({ type: 'log', args: [1], time: new Date() }, 100);
         expect(spy).toHaveBeenCalledTimes(1);
 
-        // Network Tab active (should NOT notify for log)
+
         spy.mockClear();
         store.state.activeTab = 'network';
         store.addLog({ type: 'log', args: [2], time: new Date() }, 100);
         expect(spy).not.toHaveBeenCalled();
 
-        // But should notify for request
+
         store.addRequest({ id: '1', url: '/', status: 200 } as any);
         expect(spy).toHaveBeenCalledTimes(1);
     });
@@ -96,8 +96,8 @@ describe('Store', () => {
         store.updateMock('1', { status: 404 });
         expect(store.state.mocks[0].status).toBe(404);
 
-        // Non-existent mock
-        store.updateMock('999', { status: 500 }); // Should not throw
+
+        store.updateMock('999', { status: 500 });
     });
 
     test('unsubscribes listeners', () => {
@@ -148,17 +148,12 @@ describe('Store', () => {
         const b: any = { val: 1 };
         b.self = b; // Same structure circular
 
-        // This hits the try/catch in compareArgs presumably? 
-        // fast-safe-stringify is not used, it uses JSON.stringify which throws on circular.
-        // So compareArgs returns false.
 
-        // We need to access private compareArgs or rely on addLog deduplication logic
-        // If it throws, compareArgs returns false, so isDuplicate is false.
 
         store.addLog({ type: 'log', args: [a], time: new Date() }, 10);
         store.addLog({ type: 'log', args: [b], time: new Date() }, 10);
 
-        // They should NOT be deduplicated because JSON.stringify throws
+
         expect(store.state.logs.length).toBe(2);
     });
 });

@@ -103,7 +103,7 @@ export class Renderer {
             if (tab === 'mocks') {
                 if (confirm('Delete all Mocks?')) {
                     this.store.state.mocks = [];
-                    this.store.notify(); // Direct state mod for brevity here, ideally add clearMocks to store
+                    this.store.notify();
                 }
             }
         };
@@ -114,7 +114,7 @@ export class Renderer {
                 const val = (e.target as HTMLInputElement).value;
                 this.store.addLog({ type: 'log', args: [`> ${val}`], time: new Date() }, 9999);
                 try {
-                    // eslint-disable-next-line no-eval
+
                     const res = (window as any).eval(val);
                     console.log(res);
                 } catch (err) {
@@ -142,7 +142,7 @@ export class Renderer {
             t.classList.toggle('odc__tab--active', t.dataset.tab === tab);
         });
 
-        // Toggle Search visibility
+
         const showSearch = ['console', 'network'].includes(tab);
         if (this.dom.search) {
             this.dom.search.style.display = showSearch ? 'block' : 'none';
@@ -153,7 +153,7 @@ export class Renderer {
             this.dom.clearBtn.style.display = showClear ? 'block' : 'none';
         }
 
-        // Toggle Input Box visibility
+
         if (this.dom.inputBox) {
             this.dom.inputBox.style.display = tab === 'console' ? 'block' : 'none';
         }
@@ -192,10 +192,6 @@ export class Renderer {
         const logs = this.store.getFilteredLogs();
         const searchQuery = this.store.state.searchQuery;
 
-        // Conditions requiring full re-render:
-        // 1. Search filter is active (indices shift effectively)
-        // 2. Clear action happened (logs.length < rendered)
-        // 3. Tab switch or first render happened (content might be empty or other tab info)
         const isNotConsoleContent = !this.dom.content.querySelector('.odc__row--log') && !this.dom.content.querySelector('.odc__row--info') && !this.dom.content.querySelector('.odc__row--warn') && !this.dom.content.querySelector('.odc__row--error') && this.dom.content.innerHTML !== '';
 
         const shouldFullRender = searchQuery || logs.length < this.renderedLogCount || this.dom.content.innerHTML === '' || isNotConsoleContent;
@@ -206,10 +202,7 @@ export class Renderer {
             logs.forEach(l => this.renderLogRow(l));
             this.renderedLogCount = logs.length;
         } else {
-            // Incremental Update
-            // 1. Check if last log count header updated (Deduplication)
             if (this.renderedLogCount > 0 && logs.length === this.renderedLogCount) {
-                // Same number of logs? Maybe the last one's count changed.
                 const lastLog = logs[logs.length - 1];
                 if (lastLog.count && lastLog.count > 1) {
                     const lastRow = this.dom.content.lastElementChild;
@@ -217,16 +210,12 @@ export class Renderer {
                         const badge = lastRow.querySelector('.odc__badge');
                         if (badge) badge.textContent = String(lastLog.count);
                         else {
-                            // Was 1, now 2+, need to inject badge
-                            // Easier to replace the whole row content or just innerHTML the time part
-                            // Let's just re-render the last row for safety
                             this.dom.content.removeChild(lastRow);
                             this.renderLogRow(lastLog);
                         }
                     }
                 }
             } else {
-                // Append new logs
                 for (let i = this.renderedLogCount; i < logs.length; i++) {
                     this.renderLogRow(logs[i]);
                 }
@@ -235,10 +224,11 @@ export class Renderer {
         }
 
         try {
-            // Only scroll if near bottom or if it's a new message
             this.dom.content.scrollTop = this.dom.content.scrollHeight;
-        } catch (e) { /* ignore */ }
+        } catch (e) { }
     }
+
+
 
     renderLogRow(log: LogEntry) {
         const row = document.createElement('div');
@@ -307,8 +297,8 @@ export class Renderer {
 
     renderSystem() {
         let mem = 'N/A';
-        // @ts-ignore
-        if (performance?.memory) mem = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + ' MB';
+
+        if ((performance as any)?.memory) mem = Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024) + ' MB';
 
         this.dom.content.innerHTML = `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:15px">
@@ -440,10 +430,10 @@ export class Renderer {
         if (typeof obj === 'boolean') return this._sp(String(obj), 'od-bool'); // New class od-bool
         if (typeof obj === 'string') return this._sp(`"${obj}"`, 'od-str');
 
-        // Handle Function
+
         if (typeof obj === 'function') return this._sp(`f ${obj.name || '()'}`, 'od-key');
 
-        // Handle Error Objects Explicitly
+
         if (obj instanceof Error) {
             const det = document.createElement('details');
             det.style.display = 'inline-block';
@@ -522,7 +512,7 @@ export class Renderer {
                     }
                 };
 
-                // Initial render of 50 items
+
                 renderChunk(0, 50);
                 det.appendChild(wrap);
             }
@@ -544,38 +534,22 @@ export class Renderer {
 
         const trigger = this.config.trigger || {};
 
-        // Position logic with Inset for consistency
-        const pos = trigger.position || 'bottom-right';
-
-        let inset = 'auto 30px 30px auto'; // Default (bottom-right)
-
-        if (pos === 'bottom-left') inset = 'auto auto 30px 30px';
-        if (pos === 'top-right') inset = '30px 30px auto auto';
-        if (pos === 'top-left') inset = '30px auto auto 30px';
-
-        btn.style.inset = inset;
-
-        // Reset legacy props just in case
-        btn.style.bottom = 'auto'; btn.style.top = 'auto'; btn.style.left = 'auto'; btn.style.right = 'auto';
-
-        // Color
-        if (trigger.color) {
-            btn.style.setProperty('--odc-trigger-bg', trigger.color);
-        }
-
-        // Text vs Dot
         if (trigger.text) {
-            btn.innerHTML = `<span>${trigger.text}</span>`;
+            btn.textContent = trigger.text;
             btn.style.width = 'auto';
-            btn.style.padding = '0 15px';
+            btn.style.padding = '8px 12px';
+            btn.style.borderRadius = '8px';
         } else {
-            // Revert to Dot
             btn.innerHTML = '<div class="odc__dot"></div>';
             btn.style.width = '48px';
             btn.style.padding = '0';
+            btn.style.borderRadius = '14px';
+        }
+
+        if (trigger.color) {
+            btn.style.setProperty('--odc-trigger-bg', trigger.color);
         }
     }
-
     _sp(txt: string, cls: string) {
         const s = document.createElement('span');
         s.className = cls;

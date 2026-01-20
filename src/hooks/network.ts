@@ -37,8 +37,6 @@ export class NetworkHook {
             req.reqHeaders = reqHeaders;
             req.reqBody = this.parseBody(args[1]?.body);
             this.store.addRequest(req);
-
-            // Mock Check
             const mock = this.findMock(method, url);
             if (mock) {
                 if (mock.delay) await new Promise(r => setTimeout(r, mock.delay));
@@ -89,30 +87,25 @@ export class NetworkHook {
         const oldOpen = XMLHttpRequest.prototype.open;
         const oldSend = XMLHttpRequest.prototype.send;
         const oldSetHeader = XMLHttpRequest.prototype.setRequestHeader;
-        const self = this; // eslint-disable-line
+        const self = this;
 
         XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
-            // @ts-ignore
-            this._odc = {
+            (this as any)._odc = {
                 id: Math.random().toString(36).substr(2),
                 method,
                 url: url.toString(),
                 reqHeaders: {}
             };
-            // @ts-ignore
-            oldOpen.apply(this, arguments);
+            oldOpen.apply(this, arguments as any);
         };
 
         XMLHttpRequest.prototype.setRequestHeader = function (header: string, value: string) {
-            // @ts-ignore
-            if (this._odc) this._odc.reqHeaders[header] = value;
-            // @ts-ignore
-            oldSetHeader.apply(this, arguments);
+            if ((this as any)._odc) (this as any)._odc.reqHeaders[header] = value;
+            oldSetHeader.apply(this, arguments as any);
         };
 
         XMLHttpRequest.prototype.send = function (body: any) {
-            // @ts-ignore
-            const meta = this._odc;
+            const meta = (this as any)._odc;
             if (meta) {
                 const req = self.createReq(meta.id, meta.url, meta.method, 'xhr');
                 req.reqHeaders = meta.reqHeaders;
@@ -131,7 +124,7 @@ export class NetworkHook {
                             resHeaders: { 'x-mocked-by': 'osodreamer-console' }
                         });
 
-                        // Fake XHR Properties
+
                         Object.defineProperty(this, 'status', { value: mock.status });
                         Object.defineProperty(this, 'readyState', { value: 4 });
                         Object.defineProperty(this, 'responseText', { value: mock.responseBody });
@@ -141,7 +134,8 @@ export class NetworkHook {
                         this.dispatchEvent(new Event('readystatechange'));
                         this.dispatchEvent(new Event('load'));
                     }, mock.delay || 10);
-                    return; // Stop real request
+
+                    return;
                 }
 
                 this.addEventListener('load', function () {
@@ -171,8 +165,7 @@ export class NetworkHook {
                     self.store.updateRequest(meta.id, { status: 'ERR' });
                 });
             }
-            // @ts-ignore
-            oldSend.apply(this, arguments);
+            oldSend.apply(this, arguments as any);
         };
     }
 

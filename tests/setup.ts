@@ -1,5 +1,3 @@
-// Polyfills
-// @ts-ignore
 class MockHeaders {
     map = new Map<string, string>();
     constructor(init?: any) { if (init) Object.keys(init).forEach(k => this.map.set(k, init[k])); }
@@ -7,11 +5,9 @@ class MockHeaders {
     get(k: string) { return this.map.get(k) || null; }
     forEach(cb: any) { this.map.forEach((v, k) => cb(v, k)); }
 }
-// @ts-ignore
-global.Headers = MockHeaders;
+(global as any).Headers = MockHeaders;
 
-// @ts-ignore
-global.Request = class {
+(global as any).Request = class {
     url: string; method: string;
     constructor(input: string, init?: any) {
         this.url = input;
@@ -19,8 +15,7 @@ global.Request = class {
     }
 };
 
-// @ts-ignore
-global.Response = class {
+(global as any).Response = class {
     ok: boolean; status: number; headers: any;
 
     clone() { return this; }
@@ -35,7 +30,6 @@ global.Response = class {
     }
 };
 
-// Mock XHR
 class MockXHR {
     listeners: Record<string, Function[]> = {};
     readyState = 0; status = 0; responseText = ''; response = '';
@@ -72,14 +66,11 @@ class MockXHR {
         if (this.listeners[evt]) this.listeners[evt].forEach(cb => cb.call(this));
     }
 }
-// @ts-ignore
-global.XMLHttpRequest = MockXHR;
+(global as any).XMLHttpRequest = MockXHR;
 
 
-// @ts-ignore
-if (typeof global.File === 'undefined') {
-    // @ts-ignore
-    global.File = class extends global.Blob {
+if (typeof (global as any).File === 'undefined') {
+    (global as any).File = class extends global.Blob {
         name = '';
         lastModified = 0;
         constructor(parts: any[], name: string, opts?: any) {
@@ -90,10 +81,8 @@ if (typeof global.File === 'undefined') {
     }
 }
 
-// @ts-ignore
 if (typeof global.fetch === 'undefined') {
-    // @ts-ignore
-    global.fetch = () => Promise.resolve(new global.Response('{}', { status: 200 }));
+    (global as any).fetch = () => Promise.resolve(new (global as any).Response('{}', { status: 200 }));
 }
 
 

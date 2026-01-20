@@ -44,11 +44,11 @@ export interface ConsoleConfig {
 export interface MockRule {
     id: string;
     active: boolean;
-    method: string; // GET, POST, or *
-    urlPattern: string; // e.g. /api/users
+    method: string;
+    urlPattern: string;
     status: number;
-    responseBody: string; // JSON string
-    delay?: number; // ms
+    responseBody: string;
+    delay?: number;
 }
 
 export interface StoreState {

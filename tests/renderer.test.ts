@@ -71,7 +71,7 @@ describe('Renderer', () => {
         expect(netRow).toBeTruthy();
         expect(netRow?.innerHTML).toContain('/test');
 
-        // Test Overlay
+
         netRow.click();
         const overlay = document.getElementById('odc-overlay') as HTMLElement;
         expect(overlay.style.display).toBe('flex');
@@ -136,14 +136,14 @@ describe('Renderer', () => {
     test('renderObject handles different types', () => {
         const container = document.createElement('div');
 
-        // Null/Undefined
+
         container.appendChild(renderer.renderObject(null));
         expect(container.innerHTML).toContain('null');
         container.innerHTML = '';
         container.appendChild(renderer.renderObject(undefined));
         expect(container.innerHTML).toContain('undefined');
 
-        // Primitives
+
         container.innerHTML = '';
         container.appendChild(renderer.renderObject(123));
         expect(container.innerHTML).toContain('123');
@@ -154,13 +154,13 @@ describe('Renderer', () => {
         container.appendChild(renderer.renderObject("hello"));
         expect(container.innerHTML).toContain('"hello"');
 
-        // Function
+
         container.innerHTML = '';
         const fn = function testFn() { };
         container.appendChild(renderer.renderObject(fn));
         expect(container.innerHTML).toContain('f testFn');
 
-        // Object / Array (Details)
+
         container.innerHTML = '';
         container.appendChild(renderer.renderObject({ a: 1 }));
         expect(container.innerHTML).toContain('Object {1}');
@@ -213,31 +213,31 @@ describe('Renderer', () => {
     });
 
     test('mocks ui interactions', () => {
-        // Setup initial mocks
+
         store.addMock({ id: '1', active: true, method: 'GET', urlPattern: '/test', status: 200, responseBody: '{}' });
 
         renderer.switchTab('mocks');
         renderer.toggle();
 
-        // Check list
+
         expect(renderer.dom.content.innerHTML).toContain('/test');
 
-        // Toggle
+
         const toggleBtn = document.querySelector('.odc-toggle-mock') as HTMLElement;
         toggleBtn.click();
         expect(store.state.mocks[0].active).toBe(false);
 
-        // Delete
-        window.confirm = jest.fn(() => true); // If delete uses confirm? It doesn't in current code, but good practice
+
+        window.confirm = jest.fn(() => true);
         const delBtn = document.querySelector('.odc-del-mock') as HTMLElement;
         delBtn.click();
         expect(store.state.mocks.length).toBe(0);
 
-        // Add specific interaction (prompts)
+
         window.prompt = jest.fn()
-            .mockReturnValueOnce('/new-api') // URL
-            .mockReturnValueOnce('201')      // Status
-            .mockReturnValueOnce('{"id":1}'); // Body
+            .mockReturnValueOnce('/new-api')
+            .mockReturnValueOnce('201')
+            .mockReturnValueOnce('{"id":1}');
 
         const addBtn = document.getElementById('odc-add-mock')!;
         addBtn.click();
@@ -247,14 +247,14 @@ describe('Renderer', () => {
     });
 
     test('renders system tab memory', () => {
-        // Mock performance.memory
+
         Object.defineProperty(window.performance, 'memory', {
             value: { usedJSHeapSize: 10 * 1024 * 1024 },
             configurable: true
         });
 
         renderer.switchTab('system');
-        renderer.toggle(); // Triggers render
+        renderer.toggle();
 
         expect(renderer.dom.content.innerHTML).toContain('10 MB');
     });
@@ -264,7 +264,7 @@ describe('Renderer', () => {
         store.addLog({ type: 'log', args: ['A'], time: new Date() }, 10);
         renderer.toggle();
 
-        // Click header clear button
+
         const clearHeaderBtn = document.getElementById('odc-clear')!;
         clearHeaderBtn.click();
 
@@ -275,7 +275,7 @@ describe('Renderer', () => {
         clearHeaderBtn.click();
         expect(Object.keys(store.state.reqs).length).toBe(0);
 
-        // Mocks clear
+
         renderer.switchTab('mocks');
         store.addMock({ id: '1', active: true, method: '*', urlPattern: 'a', status: 200, responseBody: '{}' });
         window.confirm = jest.fn(() => true);
@@ -292,7 +292,7 @@ describe('Renderer', () => {
         expect(el.innerHTML).toContain('Test Error');
         expect(el.innerHTML).toContain('test position');
 
-        // Also test plain throw object
+
         const el2 = renderer.renderObject({ throwing: true });
     });
 

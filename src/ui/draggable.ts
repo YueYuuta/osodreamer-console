@@ -55,7 +55,7 @@ export class Draggable {
             endDrag();
         };
 
-        // Touch events
+
         this.element.addEventListener('touchstart', (e) => start(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
         this.element.addEventListener('touchmove', (e) => {
             if (e.cancelable) e.preventDefault();
@@ -95,7 +95,7 @@ export class Draggable {
         this.element.style.left = left + 'px';
         this.element.style.top = top + 'px';
 
-        // Remove transition after animation
+
         setTimeout(() => {
             this.element.style.transition = '';
         }, 300);

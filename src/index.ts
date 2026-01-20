@@ -65,8 +65,8 @@ export default class OsoDreamerConsole {
     }
 }
 
-// @ts-ignore
+
 if (typeof window !== 'undefined') {
-    // @ts-ignore
-    window.OsoDreamerConsole = OsoDreamerConsole;
+
+    (window as any).OsoDreamerConsole = OsoDreamerConsole;
 }

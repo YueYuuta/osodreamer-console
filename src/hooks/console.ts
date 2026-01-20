@@ -11,14 +11,9 @@ export class ConsoleHook {
 
     enable() {
         ['log', 'warn', 'error', 'info'].forEach(m => {
-            // @ts-ignore
-            this.originalConsole[m] = console[m];
-            // @ts-ignore
-            console[m] = (...args: any[]) => {
-                // Call original
+            (this.originalConsole as any)[m] = (console as any)[m];
+            (console as any)[m] = (...args: any[]) => {
                 this.originalConsole[m].apply(console, args);
-
-                // Add to store
                 this.store.addLog({
                     type: m as LogType,
                     args,
@@ -30,8 +25,7 @@ export class ConsoleHook {
 
     disable() {
         Object.keys(this.originalConsole).forEach(m => {
-            // @ts-ignore
-            console[m] = this.originalConsole[m];
+            (console as any)[m] = this.originalConsole[m];
         });
     }
 }

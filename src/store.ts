@@ -61,7 +61,7 @@ export class Store {
 
         if (isDuplicate) {
             lastLog.count = (lastLog.count || 1) + 1;
-            lastLog.time = log.time; // Update time to latest
+            lastLog.time = log.time;
             if (this.state.isOpen && this.state.activeTab === 'console') {
                 this.notify();
             }
@@ -84,7 +84,7 @@ export class Store {
         try {
             return JSON.stringify(a) === JSON.stringify(b);
         } catch {
-            return false; // Circular refs or errors, assume different
+            return false;
         }
     }
 
