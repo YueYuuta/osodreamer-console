@@ -55,8 +55,12 @@ export class Renderer {
                 </div>
                 <div class="odc__spacer"></div>
                 <input class="odc__search" id="odc-search" placeholder="Filter..." />
-                <div class="odc__clear" id="odc-clear" style="cursor:pointer;opacity:0.6;font-size:16px;margin:0 8px">🚫</div>
-                <div class="odc__close" id="odc-close">✕</div>
+                <div class="odc__clear" id="odc-clear">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </div>
+                <div class="odc__close" id="odc-close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
             </div>
             <div class="odc__content" id="odc-content"></div>
             <div class="odc__input-box" id="odc-input-box">
@@ -145,17 +149,17 @@ export class Renderer {
 
         const showSearch = ['console', 'network'].includes(tab);
         if (this.dom.search) {
-            this.dom.search.style.display = showSearch ? 'block' : 'none';
+            this.dom.search.style.display = showSearch ? '' : 'none';
         }
 
         const showClear = ['console', 'network', 'mocks'].includes(tab);
         if (this.dom.clearBtn) {
-            this.dom.clearBtn.style.display = showClear ? 'block' : 'none';
+            this.dom.clearBtn.style.display = showClear ? '' : 'none';
         }
 
 
         if (this.dom.inputBox) {
-            this.dom.inputBox.style.display = tab === 'console' ? 'block' : 'none';
+            this.dom.inputBox.style.display = tab === 'console' ? '' : 'none';
         }
 
         this.render();
