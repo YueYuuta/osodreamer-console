@@ -1,6 +1,6 @@
 {
     "name": "osodreamer-web-console",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "A lightweight, framework-agnostic developer console for web applications.",
     "main": "./dist/osodreamer-console.umd.js",
     "module": "./dist/osodreamer-console.es.js",

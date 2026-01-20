@@ -38,17 +38,21 @@ export class Draggable {
             }
         };
 
-        const endTouch = (e: TouchEvent) => {
-            if (!this.isDragging) {
-                if (e.cancelable) e.preventDefault(); // Prevent mouse emulation
+        const endDrag = () => {
+            if (this.isDragging) {
+                this.snapToBounds();
+            } else {
                 this.onClick();
             }
         };
 
+        const endTouch = (e: TouchEvent) => {
+            if (e.cancelable) e.preventDefault();
+            endDrag();
+        };
+
         const endMouse = () => {
-            if (!this.isDragging) {
-                this.onClick();
-            }
+            endDrag();
         };
 
         // Touch events
@@ -61,15 +65,39 @@ export class Draggable {
 
         this.element.addEventListener('mousedown', (e) => start(e.clientX, e.clientY));
         window.addEventListener('mousemove', (e) => {
-            if (this.isDragging || (e.buttons === 1 && this.element.contains(e.target as Node)))
+            if (this.isDragging || (e.buttons === 1 && this.element.contains(e.target as Node))) {
                 move(e.clientX, e.clientY);
-        });
-        this.element.addEventListener('mouseup', endMouse);
-
-        this.element.onclick = () => {
-            if (!('ontouchstart' in window) && !this.isDragging) {
-                // Logic handled by mouseup, but just in case
             }
-        };
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (this.isDragging) endMouse();
+        });
+        this.element.addEventListener('mouseup', (e) => {
+            if (!this.isDragging) endMouse();
+        });
+    }
+
+    snapToBounds() {
+        const rect = this.element.getBoundingClientRect();
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        const pad = 10;
+
+        let left = rect.left;
+        let top = rect.top;
+
+        if (left < pad) left = pad;
+        if (left + rect.width > winW - pad) left = winW - rect.width - pad;
+        if (top < pad) top = pad;
+        if (top + rect.height > winH - pad) top = winH - rect.height - pad;
+
+        this.element.style.transition = 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+        this.element.style.left = left + 'px';
+        this.element.style.top = top + 'px';
+
+        // Remove transition after animation
+        setTimeout(() => {
+            this.element.style.transition = '';
+        }, 300);
     }
 }

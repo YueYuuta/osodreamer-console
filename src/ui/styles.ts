@@ -94,7 +94,7 @@ export const STYLES = `
 /* JSON Viewer */
 details > summary { list-style: none; cursor: pointer; color: #71717a; outline: none; }
 details[open] > summary { color: #fff; margin-bottom: 4px; }
-.od-null { color: #f472b6; } .od-num { color: #60a5fa; } .od-str { color: #a78bfa; } .od-key { color: #94a3b8; margin-right: 5px; }
+.od-null { color: #f472b6; } .od-num { color: #60a5fa; } .od-str { color: #a78bfa; } .od-key { color: #94a3b8; margin-right: 5px; } .od-bool { color: #34d399; font-weight: bold; }
 
 /* Mobile Optimizations */
 @media (max-width: 600px) {

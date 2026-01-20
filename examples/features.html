@@ -57,10 +57,30 @@
         <button onclick="logDeepObject()" style="background:#10b981;color:white">Log Deep Object</button>
     </div>
 
+    <div class="group">
+        <h2>4. Stress Test (Performance)</h2>
+        <p>Adds 500 logs in 5ms intervals. Watch the list update smoothly thanks to incremental rendering.</p>
+        <button onclick="startStressTest()" style="background:#8b5cf6;color:white">Run Stress Test (500 logs)</button>
+    </div>
+
+    <div class="group">
+        <h2>5. Network Robustness</h2>
+        <p>Test FormData (File uploads) and proper Error catching.</p>
+        <button onclick="sendFormData()" style="background:#f59e0b;color:white">Send FormData (Fake Upload)</button>
+        <button onclick="sendFetchError()" style="background:#dc2626;color:white">Trigger Fetch Error (Invalid
+            Domain)</button>
+    </div>
+
+    <div class="group">
+        <h2>6. Large Data Test</h2>
+        <p>Log an array with 1000 items. Should render instantly (only 50 first) and offer "Show more".</p>
+        <button onclick="logLargeArray()" style="background:#0891b2;color:white">Log Array (1000 items)</button>
+    </div>
+
     <script src="../dist/osodreamer-console.umd.js"></script>
     <script>
         // Initialize Console
-        const consoleInstance = new OsoDreamerConsole({
+        const consoleInstance = OsoDreamerConsole.init({
             trigger: { position: 'bottom-right', color: '#3b82f6' }
         });
 
@@ -107,6 +127,48 @@
                     metrics: { cpu: 23, memory: "128MB" }
                 }
             });
+        }
+
+        function startStressTest() {
+            console.log("Starting stress test...");
+            let count = 0;
+            const interval = setInterval(() => {
+                console.log(`Log message #${count} - ${new Date().toISOString()}`);
+                count++;
+                if (count >= 500) {
+                    clearInterval(interval);
+                    console.log("Stress test finished.");
+                }
+            }, 5);
+        }
+
+        function sendFormData() {
+            const fd = new FormData();
+            fd.append('username', 'usuario_test');
+            fd.append('file', new File(['dummy content'], 'profile.png', { type: 'image/png' }));
+
+            console.log("Sending FormData...", fd);
+            // We use a dummy endpoint, it will likely fail 404 but we want to see the Request Body in Console
+            fetch('/api/upload', {
+                method: 'POST',
+                body: fd
+            }).catch(e => console.warn("Expected 404/Error, check Network tab for Body details"));
+        }
+
+        function sendFetchError() {
+            // This domain doesn't exist, should trigger a network error exception
+            console.log("fetching http://domain-that-does-not-exist.local...");
+            fetch('http://domain-that-does-not-exist.local')
+                .then(r => console.log(r))
+                .catch(e => console.error("Caught Fetch Error:", e));
+        }
+
+        function logLargeArray() {
+            const arr = [];
+            for (let i = 0; i < 1000; i++) {
+                arr.push({ id: i, value: Math.random() });
+            }
+            console.log("Large Array (1000 items):", arr);
         }
 
         console.log("Demo Loaded. Click buttons to test features.");

@@ -142,27 +142,83 @@ export class Renderer {
         this.render();
     }
 
+    renderedLogCount: number = 0;
+    renderedReqCount: number = 0;
+
     render() {
         if (!this.store.state.isOpen) return;
 
-        this.dom.content.innerHTML = '';
         const tab = this.store.state.activeTab;
 
         if (tab === 'console') {
-            const logs = this.store.getFilteredLogs();
-            logs.forEach(l => this.renderLogRow(l));
-            try {
-                this.dom.content.scrollTop = this.dom.content.scrollHeight;
-            } catch (e) { /* ignore readonly in tests */ }
+            this.renderConsoleTab();
         } else if (tab === 'network') {
             const reqs = this.store.getFilteredRequests();
+            // Network implies complexity (sort, filter), so simple re-render is safer for now 
+            // unless we optimize heavily. Let's keep network simple or optimize later.
+            // For now, let's keep it robust by clearing.
+            this.dom.content.innerHTML = '';
             if (!reqs.length) this.dom.content.innerHTML = '<div style="padding:20px;text-align:center;color:#52525b">No traffic</div>';
             reqs.forEach(r => this.renderNetRow(r));
         } else if (tab === 'storage') {
+            this.dom.content.innerHTML = '';
             this.renderStorage();
         } else if (tab === 'system') {
+            this.dom.content.innerHTML = '';
             this.renderSystem();
         }
+    }
+
+    renderConsoleTab() {
+        const logs = this.store.getFilteredLogs();
+        const searchQuery = this.store.state.searchQuery;
+
+        // Conditions requiring full re-render:
+        // 1. Search filter is active (indices shift effectively)
+        // 2. Clear action happened (logs.length < rendered)
+        // 3. Tab switch or first render happened (content might be empty or other tab info)
+        const isNotConsoleContent = !this.dom.content.querySelector('.odc__row--log') && !this.dom.content.querySelector('.odc__row--info') && !this.dom.content.querySelector('.odc__row--warn') && !this.dom.content.querySelector('.odc__row--error') && this.dom.content.innerHTML !== '';
+
+        const shouldFullRender = searchQuery || logs.length < this.renderedLogCount || this.dom.content.innerHTML === '' || isNotConsoleContent;
+
+        if (shouldFullRender) {
+            this.dom.content.innerHTML = '';
+            this.renderedLogCount = 0;
+            logs.forEach(l => this.renderLogRow(l));
+            this.renderedLogCount = logs.length;
+        } else {
+            // Incremental Update
+            // 1. Check if last log count header updated (Deduplication)
+            if (this.renderedLogCount > 0 && logs.length === this.renderedLogCount) {
+                // Same number of logs? Maybe the last one's count changed.
+                const lastLog = logs[logs.length - 1];
+                if (lastLog.count && lastLog.count > 1) {
+                    const lastRow = this.dom.content.lastElementChild;
+                    if (lastRow) {
+                        const badge = lastRow.querySelector('.odc__badge');
+                        if (badge) badge.textContent = String(lastLog.count);
+                        else {
+                            // Was 1, now 2+, need to inject badge
+                            // Easier to replace the whole row content or just innerHTML the time part
+                            // Let's just re-render the last row for safety
+                            this.dom.content.removeChild(lastRow);
+                            this.renderLogRow(lastLog);
+                        }
+                    }
+                }
+            } else {
+                // Append new logs
+                for (let i = this.renderedLogCount; i < logs.length; i++) {
+                    this.renderLogRow(logs[i]);
+                }
+                this.renderedLogCount = logs.length;
+            }
+        }
+
+        try {
+            // Only scroll if near bottom or if it's a new message
+            this.dom.content.scrollTop = this.dom.content.scrollHeight;
+        } catch (e) { /* ignore */ }
     }
 
     renderLogRow(log: LogEntry) {
@@ -293,7 +349,7 @@ export class Renderer {
         if (obj === null) return this._sp('null', 'od-null');
         if (obj === undefined) return this._sp('undefined', 'od-null');
         if (typeof obj === 'number') return this._sp(String(obj), 'od-num');
-        if (typeof obj === 'boolean') return this._sp(String(obj), 'od-null');
+        if (typeof obj === 'boolean') return this._sp(String(obj), 'od-bool'); // New class od-bool
         if (typeof obj === 'string') return this._sp(`"${obj}"`, 'od-str');
 
         // Handle Function
@@ -308,7 +364,7 @@ export class Renderer {
             const sum = document.createElement('summary');
             sum.style.color = '#ef4444';
             sum.textContent = `${obj.name}: ${obj.message}`;
-            det.appendChild(sum); // Clicking summary toggles details
+            det.appendChild(sum);
 
             const stack = document.createElement('div');
             stack.style.whiteSpace = 'pre-wrap';
@@ -324,8 +380,10 @@ export class Renderer {
 
         const isArr = Array.isArray(obj);
         let label = '';
+        let keys: string[] = [];
         try {
-            label = isArr ? `Array(${obj.length})` : `Object {${Object.keys(obj).length}}`;
+            keys = Object.keys(obj);
+            label = isArr ? `Array(${obj.length})` : `Object {${keys.length}}`;
         } catch {
             label = 'Object (Error)';
         }
@@ -342,20 +400,42 @@ export class Renderer {
                 const wrap = document.createElement('div');
                 wrap.style.paddingLeft = '12px';
                 wrap.style.borderLeft = '1px solid rgba(255,255,255,0.1)';
-                try {
-                    for (let k in obj) {
+
+                const renderChunk = (start: number, count: number) => {
+                    const limit = Math.min(start + count, keys.length);
+                    for (let i = start; i < limit; i++) {
+                        const k = keys[i];
                         const line = document.createElement('div');
                         line.style.display = 'flex';
                         const key = document.createElement('span');
                         key.textContent = k + ': ';
                         key.className = 'od-key';
                         line.appendChild(key);
-                        line.appendChild(this.renderObject(obj[k]));
+                        try {
+                            line.appendChild(this.renderObject(obj[k]));
+                        } catch {
+                            line.appendChild(this._sp('[Error]', 'od-null'));
+                        }
                         wrap.appendChild(line);
                     }
-                } catch {
-                    wrap.textContent = '[Error rendering object]';
-                }
+
+                    if (limit < keys.length) {
+                        const moreBtn = document.createElement('div');
+                        moreBtn.textContent = `Show ${Math.min(50, keys.length - limit)} more...`;
+                        moreBtn.style.cursor = 'pointer';
+                        moreBtn.style.color = '#60a5fa';
+                        moreBtn.style.padding = '4px 0';
+                        moreBtn.style.fontSize = '10px';
+                        moreBtn.onclick = () => {
+                            moreBtn.remove();
+                            renderChunk(limit, 50);
+                        };
+                        wrap.appendChild(moreBtn);
+                    }
+                };
+
+                // Initial render of 50 items
+                renderChunk(0, 50);
                 det.appendChild(wrap);
             }
         };

@@ -35,7 +35,7 @@ export class NetworkHook {
 
             const req: NetworkRequest = this.createReq(id, url, method, 'fetch');
             req.reqHeaders = reqHeaders;
-            req.reqBody = args[1]?.body;
+            req.reqBody = this.parseBody(args[1]?.body);
             this.store.addRequest(req);
 
             try {
@@ -60,7 +60,7 @@ export class NetworkHook {
                 this.store.updateRequest(id, updates);
                 return res;
             } catch (e: any) {
-                this.store.updateRequest(id, { status: 'ERR', resBody: e.message });
+                this.store.updateRequest(id, { status: 'ERR', resBody: e?.message || String(e) });
                 throw e;
             }
         };
@@ -97,7 +97,7 @@ export class NetworkHook {
             if (meta) {
                 const req = self.createReq(meta.id, meta.url, meta.method, 'xhr');
                 req.reqHeaders = meta.reqHeaders;
-                req.reqBody = body;
+                req.reqBody = self.parseBody(body);
                 self.store.addRequest(req);
 
                 this.addEventListener('load', function () {
@@ -160,5 +160,26 @@ export class NetworkHook {
             reqBody: null,
             resBody: null
         };
+    }
+
+    private parseBody(body: any): any {
+        if (!body) return null;
+        if (typeof body === 'string') {
+            try { return JSON.parse(body); } catch { return body; }
+        }
+        if (typeof FormData !== 'undefined' && body instanceof FormData) {
+            const obj: Record<string, any> = {};
+            body.forEach((val, key) => {
+                obj[key] = (val instanceof File) ? `[File: ${val.name} (${val.size}b)]` : val;
+            });
+            return obj;
+        }
+        if (typeof URLSearchParams !== 'undefined' && body instanceof URLSearchParams) {
+            return Object.fromEntries(body.entries());
+        }
+        if (typeof Blob !== 'undefined' && body instanceof Blob) {
+            return `[Blob: ${body.type}, ${body.size} bytes]`;
+        }
+        return body;
     }
 }
