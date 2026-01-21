@@ -27,7 +27,7 @@ export const STYLES = `
 
 
 .odc__panel { 
-    display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: 60vh; max-height: 80vh;
+    display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: 60dvh; max-height: 80dvh;
     background: var(--odc-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--odc-border); border-top-left-radius: 18px; border-top-right-radius: 18px;
     flex-direction: column; z-index: 2147483646; color: var(--odc-text); box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
@@ -68,7 +68,17 @@ export const STYLES = `
 .odc__content { flex: 1; overflow-y: auto; padding: 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
 
 
-.odc__row { padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; }
+.odc__row { padding: 6px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; position: relative; }
+.odc__row:hover .odc__copy { opacity: 1; pointer-events: auto; }
+.odc__copy {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.1); border-radius: 4px; padding: 4px;
+    cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    color: #a1a1aa; display: flex; align-items: center; justify-content: center;
+}
+.odc__copy:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.odc__copy:active { transform: translateY(-50%) scale(0.95); }
+
 .odc__row--warn { background: rgba(251, 191, 36, 0.08); border-left: 2px solid #f59e0b; }
 .odc__row--error { background: rgba(239, 68, 68, 0.08); border-left: 2px solid #ef4444; }
 .odc__time { color: #52525b; min-width: 45px; font-size: 10px; margin-top: 1px; }
@@ -123,8 +133,9 @@ details[open] > summary { color: #fff; margin-bottom: 4px; }
 
 
 @media (max-width: 600px) {
-  .odc__panel { height: 80vh; }
+  .odc__panel { height: 80dvh; }
   .odc__tab { padding: 8px 12px; font-size: 10px; }
+  .odc__row { padding-right: 36px; }
   
   .odc__header { 
     display: grid; 

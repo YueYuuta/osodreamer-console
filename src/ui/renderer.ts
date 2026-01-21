@@ -102,8 +102,12 @@ export class Renderer {
         this.dom.closeBtn.onclick = () => this.toggle();
         this.dom.clearBtn.onclick = () => {
             const tab = this.store.state.activeTab;
-            if (tab === 'console') this.store.clearLogs();
-            if (tab === 'network') this.store.clearRequests();
+            if (tab === 'console' || tab === 'network') {
+                if (confirm(`Clear ${tab}?`)) {
+                    if (tab === 'console') this.store.clearLogs();
+                    if (tab === 'network') this.store.clearRequests();
+                }
+            }
             if (tab === 'mocks') {
                 if (confirm('Delete all Mocks?')) {
                     this.store.state.mocks = [];
@@ -250,6 +254,24 @@ export class Renderer {
             el.style.marginRight = '6px';
             row.appendChild(el);
         });
+
+        const copyBtn = document.createElement('div');
+        copyBtn.className = 'odc__copy';
+        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+        copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            try {
+                const text = log.args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
+                navigator.clipboard.writeText(text);
+                const originalIcon = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(() => copyBtn.innerHTML = originalIcon, 1500);
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        };
+        row.appendChild(copyBtn);
+
         this.dom.content.appendChild(row);
     }
 
