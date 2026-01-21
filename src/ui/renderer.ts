@@ -432,7 +432,19 @@ export class Renderer {
         if (obj === undefined) return this._sp('undefined', 'od-null');
         if (typeof obj === 'number') return this._sp(String(obj), 'od-num');
         if (typeof obj === 'boolean') return this._sp(String(obj), 'od-bool'); // New class od-bool
-        if (typeof obj === 'string') return this._sp(`"${obj}"`, 'od-str');
+        if (typeof obj === 'string') {
+            const s = this._sp(`"${obj}"`, 'od-str od-str-truncated');
+            s.onclick = () => {
+                if (s.classList.contains('od-str-truncated')) {
+                    s.classList.remove('od-str-truncated');
+                    s.classList.add('od-str-expanded');
+                } else {
+                    s.classList.remove('od-str-expanded');
+                    s.classList.add('od-str-truncated');
+                }
+            };
+            return s;
+        }
 
 
         if (typeof obj === 'function') return this._sp(`f ${obj.name || '()'}`, 'od-key');

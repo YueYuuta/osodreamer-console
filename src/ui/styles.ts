@@ -105,6 +105,22 @@ details > summary { list-style: none; cursor: pointer; color: #71717a; outline: 
 details[open] > summary { color: #fff; margin-bottom: 4px; }
 .od-null { color: #f472b6; } .od-num { color: #60a5fa; } .od-str { color: #a78bfa; } .od-key { color: #94a3b8; margin-right: 5px; } .od-bool { color: #34d399; font-weight: bold; }
 
+.od-str-truncated {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+    cursor: pointer;
+}
+.od-str-expanded {
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: inline-block;
+    cursor: pointer;
+}
+
 
 @media (max-width: 600px) {
   .odc__panel { height: 80vh; }
